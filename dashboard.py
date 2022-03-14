@@ -1,6 +1,5 @@
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
-
 from dash import Dash, html, dcc, dash_table, Output, Input
 import requests
 import json
@@ -110,18 +109,18 @@ def prediction(id):
     if (isinstance(id, type(None))==False) and (id!=''):
        # r = requests.post('URL_OF_API_MODEL/model?id='+id) 
        # r = requests.post('http://127.0.0.1:8000/model?id='+id)
-       r = requests.post('https://crp-model-api.herokuapp.com//model?id='+id)
+       r = requests.post('https://crp-model-api.herokuapp.com/model?id='+id)
        pred=r.json()
        if isinstance(pred.get('message'), type(None)):
-            ## Adding a meaning label
-            if pred["label"] == 0:
-                label='Solvable'
-            else:
-                label='Non solvable'
-            data = pd.DataFrame.from_dict(json.loads(pred['d']))
-            force_plot = shap.force_plot(explainer(data[reducer]), matplotlib=False)
-            shap_html = f"<head>{shap.getjs()}</head><body style='background-color:white;'>{force_plot.html()}</body>"
-            fig_shap = html.Iframe(srcDoc=shap_html, style={"width": "100%", "height": "175px", "padding":"5px 0px 5px 0px",
+           ## Adding a meaning label
+           if pred["label"] == 0:
+               label='Solvable'
+           else:
+               label='Non solvable'
+           data = pd.DataFrame.from_dict(json.loads(pred['d']))
+           force_plot = shap.force_plot(explainer(data[reducer]), matplotlib=False)
+           shap_html = f"<head>{shap.getjs()}</head><body style='background-color:white;'>{force_plot.html()}</body>"
+           fig_shap = html.Iframe(srcDoc=shap_html, style={"width": "100%", "height": "175px", "padding":"5px 0px 5px 0px",
                        "border": 0})
 
         
