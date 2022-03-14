@@ -1,8 +1,5 @@
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
-from pydoc import classname
-from turtle import title
-from xmlrpc.server import DocCGIXMLRPCRequestHandler
 from dash import Dash, html, dcc, dash_table, Output, Input
 import requests
 import json
