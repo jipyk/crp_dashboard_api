@@ -1,5 +1,8 @@
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
+from pydoc import classname
+from turtle import title
+from xmlrpc.server import DocCGIXMLRPCRequestHandler
 from dash import Dash, html, dcc, dash_table, Output, Input
 import requests
 import json
@@ -24,10 +27,13 @@ server = app.server
 
 explainer =  pickle.load(open('./files/shap_explainer','rb'))
 reducer =  pickle.load(open('./files/reducer','rb'))
-#shap_values = pickle.load(open('./files/shap_values','rb'))
 
-df = pd.read_csv('./files/application_test.csv') # Dataframe
-#shap.plots.force(explainer(df.iloc[0:1,:]))
+
+# Dataframe
+df = pd.read_csv('./files/application_test.csv', 
+                usecols=['SK_ID_CURR','NAME_CONTRACT_TYPE','CODE_GENDER','FLAG_OWN_CAR','FLAG_OWN_REALTY','AMT_INCOME_TOTAL','AMT_CREDIT','AMT_ANNUITY','NAME_FAMILY_STATUS'])
+
+df['Ratio_credit_revenu'] = df['AMT_INCOME_TOTAL']*100/(12*df['AMT_ANNUITY'])
 
 
 app.layout = html.Div(id='my_app',children=[
@@ -60,40 +66,67 @@ app.layout = html.Div(id='my_app',children=[
     
 
         ###Graphiques
-        html.Div(id='graphique',children=[
-
-            html.Div(className='', children=[
-            ]),
+        html.Div(children=[
             
+            html.H2(children='Insights' ),
+            
+            html.Div(id='graphique',children=[
+                html.Div(className='panel',children=[
 
-            html.Div(className='g',children=[
-                html.H3(children='Insights' ),
+                    html.H4("Distribution des montants de crédis demandés"),
+                    html.P("Déclinaison :"),
 
-                dcc.Graph(
-                    id='main_graphic',
-                    ),  
+                    dcc.RadioItems(
+                        id='y-axis', 
+                        options={
+                            'CODE_GENDER': 'sexe',
+                            'NAME_FAMILY_STATUS':'statut matrimonial',
+                            'NAME_CONTRACT_TYPE':'type de contrat',
+                            'FLAG_OWN_CAR':'voiture'
+                        },
+                        value='CODE_GENDER', 
+                        inline=True
+                    ),
+
+                    dcc.Dropdown(
+                        id='x-axis', 
+                        options={
+                            'AMT_INCOME_TOTAL': 'Niveau de revenu',
+                            'AMT_CREDIT':'Montant du crédit',
+                            'Ratio_credit_revenu':'Ratio Crédit/Revenu',
+                        },
+                        value='AMT_INCOME_TOTAL', 
+                    ),
+                ]),
+
+                html.Div(className='plot', children=[
+
+                    dcc.Graph(id='profil_graphic')
+
+                ]),
+
             ]),
-
-            html.Div(className='',children=[
-               
-            ])
 
         ])
 
     ])
 ])
 
-# Main Graphic
+# Profil graphic
 @app.callback(
-    Output(component_id='main_graphic', component_property='figure'),
-    Input(component_id='main_graphic', component_property='figure')
+    Output(component_id='profil_graphic', component_property='figure'),
+    Input(component_id='x-axis', component_property='value'),
+    Input(component_id='y-axis', component_property='value')
 )
-def main_graphics(one):
-    xt =  np.log(df['AMT_INCOME_TOTAL'] + 1)
-    fig = px.histogram(df, x=xt, color='CODE_GENDER', nbins=50, title='Répartition des revenus selon le sexe')
-    fig.update_xaxes(title='Logarithme des revenus')
-    fig.update_yaxes(title='Nombre de personnes')
+def profil_graphic(xvar, yvar):
+    '''
+    for plotting amount of credit according a profil (gender, matrimonial statut, type of contrat)
+    '''
+    fig = px.box(df, y=yvar, x=xvar)
+    fig.update_xaxes(title=xvar)
+    fig.update_yaxes(title=yvar)
     return fig
+
 
 # Request to API prediction
 @app.callback(
@@ -106,12 +139,12 @@ def prediction(id):
     '''
     This function run requests to model api and return label, score and shap plot
     '''
-    if (isinstance(id, type(None))==False) and (id!=''):
+    if (id!=None) and (id!=''):
        # r = requests.post('URL_OF_API_MODEL/model?id='+id) 
        # r = requests.post('http://127.0.0.1:8000/model?id='+id)
        r = requests.post('https://crp-model-api.herokuapp.com/model?id='+id)
        pred=r.json()
-       if isinstance(pred.get('message'), type(None)):
+       if pred.get('message')==None:
            ## Adding a meaning label
            if pred["label"] == 0:
                label='Solvable'

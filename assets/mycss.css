@@ -44,9 +44,23 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 #graphique{
-    display:flex;
-    flex-wrap:wrap;
+    display: flex;
 
+}
+.plot{
+    width:60%;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.panel{
+    width:20%;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.Select-menu-outer{
+  background-color:rgba(0, 0, 0, 0.598) !important ;  
 }
 
 .g{
